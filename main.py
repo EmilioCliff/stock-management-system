@@ -48,12 +48,12 @@ class StockManager:
         with current_app.app_context():
             item = Stock.query.filter_by(item_name=name).first()
             if item:
+                print(f"Subtracted {quantity_sold} from {item.item_quantity}")
                 if item.item_quantity >= quantity_sold:
                     item.item_quantity -= quantity_sold
                     transaction = Transactions(item_id=item.id, sold_quantity=quantity_sold)
                     db.session.add(transaction)
                     db.session.commit()
-                    print(f"Subtracted {quantity_sold} from {item.item_quantity}")
                 else:
                     print(f"Not enough quantity to subtract {quantity_sold} from {item.item_quantity}")
             else:
@@ -92,15 +92,16 @@ class Transactions(db.Model):
 with app.app_context():
     db.create_all()
 
-# with app.app_context():
-#     stock_manager = StockManager()
+with app.app_context():
+    stock_manager = StockManager()
+    stock_manager.sell_item("Best Gin", 1)
 #     stock_manager.add_item_quantity("Chrome", 10)
 #     stock_manager.remove_item("Kenya Cane")
 #     stock_manager.update_item_price("Best Gin", 1000)
 #     stock_manager.add_item("Chrome", 300, 2)
 #     stock_manager.add_item("Best Gin", 500, 6)
 #     stock_manager.add_item("Kenya Cane", 900)
-#     stock_manager.display_stock()
+    stock_manager.display_stock()
 
 if __name__ == '__main__':
     app.run(debug=True)
