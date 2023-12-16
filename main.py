@@ -29,7 +29,9 @@ class StockManager:
         with current_app.app_context():
             item = Stock.query.filter_by(item_name=name).first()
             if item:
+                transaction = Transactions(item_id=item.id, sold_quantity=0, added_quantity=quantity)
                 item.item_quantity += quantity
+                db.session.add(transaction)
                 db.session.commit()
                 print(f"added item quantity by {quantity}")
             else:
@@ -52,7 +54,7 @@ class StockManager:
                 print(f"Subtracted {quantity_sold} from {item.item_quantity}")
                 if item.item_quantity >= quantity_sold:
                     item.item_quantity -= quantity_sold
-                    transaction = Transactions(item_id=item.id, sold_quantity=quantity_sold)
+                    transaction = Transactions(item_id=item.id, sold_quantity=quantity_sold, added_quantity=0)
                     db.session.add(transaction)
                     db.session.commit()
                 else:
@@ -104,7 +106,7 @@ class Stock(db.Model):
     item_quantity = db.Column(db.Integer, nullable=False)
     buying_price = db.Column(db.Float, nullable=False)
     selling_price = db.Column(db.Float, nullable=False)
-    transactions = db.relationship("Transactions", back_populates="itemname")
+    transactions = db.relationship("Transactions", back_populates="itemname", cascade="all, delete-orphan")
 
 class Transactions(db.Model):
     __tablename__ = "Transactions"
@@ -113,6 +115,7 @@ class Transactions(db.Model):
     item_id = db.Column(db.Integer, db.ForeignKey("stock.id"))
     itemname = db.relationship("Stock", back_populates="transactions")
     sold_quantity = db.Column(db.Integer, nullable=False)
+    added_quantity = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 with app.app_context():
@@ -120,17 +123,19 @@ with app.app_context():
 
 with app.app_context():
     stock_manager = StockManager()
-    # stock_manager.sell_item("Best Gin", 1)
+    # stock_manager.sell_item("Best Gin", 6)
     # stock_manager.add_item_quantity("Chrome", 10)
     # stock_manager.sell_item("Chrome", 3)
-    # stock_manager.add_item_quantity("Kenya Cane", 5)
+    # stock_manager.add_item_quantity("Best Gin", 8)
     # stock_manager.sell_item("Kenya Cane", 2)
-#     stock_manager.remove_item("Kenya Cane")
-#     stock_manager.update_item_price("Best Gin", 1000)
+    # stock_manager.sell_item("General Meakings", 10)
+    stock_manager.remove_item("Best Gin")
+    # stock_manager.update_item_price("Best Gin", 1000)
     # stock_manager.add_item("Chrome", 300, 500, 2)
     # stock_manager.add_item("Best Gin", 500, 550, 6)
     # stock_manager.add_item("Kenya Cane", 900, 1200)
-    # stock_manager.display_stock()
+    # stock_manager.add_item("General Meakings", 400, 750, 13)
+    stock_manager.display_stock()
     stock_manager.number_of_selled_items()
 
 
