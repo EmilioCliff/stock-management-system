@@ -4,13 +4,13 @@ from datetime import datetime
 
 # Define stockmanager that will have methods for daily operations
 class StockManager:
-    def add_item(self, name, price, quantity=0) -> None:
+    def add_item(self, name, b_price, s_price, quantity=0) -> None:
         with current_app.app_context():
             existing_item = Stock.query.filter_by(item_name=name).first()
             if existing_item:
                 print("Item already exist")
             else:
-                item = Stock(item_name=name, item_price=price, item_quantity=quantity)
+                item = Stock(item_name=name, buying_price=b_price, selling_price=s_price, item_quantity=quantity)
                 db.session.add(item)
                 db.session.commit()
                 print(f"{item.item_name} added to db")
@@ -39,7 +39,7 @@ class StockManager:
         with current_app.app_context():
             item = Stock.query.filter_by(item_name=name).first()
             if item:
-                item.item_price = new_price
+                item.selling_price = new_price
                 db.session.commit()
                 print(f"Changed item price to {new_price}")
             else:
@@ -64,7 +64,7 @@ class StockManager:
         with current_app.app_context():
             items = Stock.query.all()
             for item in items:
-                print(f"ID: {item.id}, ITEM: {item.item_name}, Quantity: {item.item_quantity}, Price: {item.item_price}")
+                print(f"ID: {item.id}, ITEM: {item.item_name}, Quantity: {item.item_quantity}, Buying Price: {item.buying_price}, Selling Price: {item.selling_price}")
 
     def number_of_selled_items(self):
         transactions = db.session.execute(db.select(Transactions).order_by(Transactions.item_id)).scalars()
@@ -84,10 +84,10 @@ class StockManager:
         if current_transaction is not None:
             item = Stock.query.get_or_404(current_transaction)
             quantity_sold[item.item_name] = {"quantity_sold": count}
-        print(len(quantity_sold))
         for item, details in quantity_sold.items():
-            print(f"{item}:{details['quantity_sold']}")
-
+            item_to_calculate = Stock.query.filter_by(item_name=item).first()
+            profit = (item_to_calculate.selling_price - item_to_calculate.buying_price)*details['quantity_sold']
+            print(f"{item}:{details['quantity_sold']} has made a profit of {profit}")
 
 
 app = Flask(__name__)
@@ -102,7 +102,8 @@ class Stock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     item_name = db.Column(db.String(100), unique=True, nullable=False)
     item_quantity = db.Column(db.Integer, nullable=False)
-    item_price = db.Column(db.Float, nullable=False)
+    buying_price = db.Column(db.Float, nullable=False)
+    selling_price = db.Column(db.Float, nullable=False)
     transactions = db.relationship("Transactions", back_populates="itemname")
 
 class Transactions(db.Model):
@@ -120,12 +121,15 @@ with app.app_context():
 with app.app_context():
     stock_manager = StockManager()
     # stock_manager.sell_item("Best Gin", 1)
-#     stock_manager.add_item_quantity("Chrome", 10)
+    # stock_manager.add_item_quantity("Chrome", 10)
+    # stock_manager.sell_item("Chrome", 3)
+    # stock_manager.add_item_quantity("Kenya Cane", 5)
+    # stock_manager.sell_item("Kenya Cane", 2)
 #     stock_manager.remove_item("Kenya Cane")
 #     stock_manager.update_item_price("Best Gin", 1000)
-#     stock_manager.add_item("Chrome", 300, 2)
-#     stock_manager.add_item("Best Gin", 500, 6)
-#     stock_manager.add_item("Kenya Cane", 900)
+    # stock_manager.add_item("Chrome", 300, 500, 2)
+    # stock_manager.add_item("Best Gin", 500, 550, 6)
+    # stock_manager.add_item("Kenya Cane", 900, 1200)
     # stock_manager.display_stock()
     stock_manager.number_of_selled_items()
 
