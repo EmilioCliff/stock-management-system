@@ -2,6 +2,7 @@ from flask import Flask, current_app
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+# Define stockmanager that will have methods for daily operations
 class StockManager:
     def add_item(self, name, price, quantity=0) -> None:
         with current_app.app_context():
@@ -65,6 +66,30 @@ class StockManager:
             for item in items:
                 print(f"ID: {item.id}, ITEM: {item.item_name}, Quantity: {item.item_quantity}, Price: {item.item_price}")
 
+    def number_of_selled_items(self):
+        transactions = db.session.execute(db.select(Transactions).order_by(Transactions.item_id)).scalars()
+        quantity_sold = {}
+        count = 0
+        current_transaction = None
+        for transaction in transactions:
+            if current_transaction == None:
+                current_transaction = transaction.item_id
+            if current_transaction == transaction.item_id:
+                count += transaction.sold_quantity
+            else:
+                item = Stock.query.get_or_404(current_transaction)
+                quantity_sold[item.item_name] = {"quantity_sold":count}
+                current_transaction = transaction.item_id
+                count = transaction.sold_quantity
+        if current_transaction is not None:
+            item = Stock.query.get_or_404(current_transaction)
+            quantity_sold[item.item_name] = {"quantity_sold": count}
+        print(len(quantity_sold))
+        for item, details in quantity_sold.items():
+            print(f"{item}:{details['quantity_sold']}")
+
+
+
 app = Flask(__name__)
 
 
@@ -94,14 +119,16 @@ with app.app_context():
 
 with app.app_context():
     stock_manager = StockManager()
-    stock_manager.sell_item("Best Gin", 1)
+    # stock_manager.sell_item("Best Gin", 1)
 #     stock_manager.add_item_quantity("Chrome", 10)
 #     stock_manager.remove_item("Kenya Cane")
 #     stock_manager.update_item_price("Best Gin", 1000)
 #     stock_manager.add_item("Chrome", 300, 2)
 #     stock_manager.add_item("Best Gin", 500, 6)
 #     stock_manager.add_item("Kenya Cane", 900)
-    stock_manager.display_stock()
+    # stock_manager.display_stock()
+    stock_manager.number_of_selled_items()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
