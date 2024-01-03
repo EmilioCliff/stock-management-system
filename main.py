@@ -1,4 +1,4 @@
-from flask import Flask, current_app
+from flask import Flask, current_app, render_template, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -121,22 +121,26 @@ class Transactions(db.Model):
 with app.app_context():
     db.create_all()
 
-with app.app_context():
-    stock_manager = StockManager()
+@app.route("/")
+def home():
+    return render_template()
+
+# with app.app_context():
+    # stock_manager = StockManager()
     # stock_manager.sell_item("Best Gin", 6)
     # stock_manager.add_item_quantity("Chrome", 10)
     # stock_manager.sell_item("Chrome", 3)
     # stock_manager.add_item_quantity("Best Gin", 8)
     # stock_manager.sell_item("Kenya Cane", 2)
     # stock_manager.sell_item("General Meakings", 10)
-    stock_manager.remove_item("Best Gin")
+    # stock_manager.remove_item("Best Gin")
     # stock_manager.update_item_price("Best Gin", 1000)
     # stock_manager.add_item("Chrome", 300, 500, 2)
     # stock_manager.add_item("Best Gin", 500, 550, 6)
     # stock_manager.add_item("Kenya Cane", 900, 1200)
     # stock_manager.add_item("General Meakings", 400, 750, 13)
-    stock_manager.display_stock()
-    stock_manager.number_of_selled_items()
+    # stock_manager.display_stock()
+    # stock_manager.number_of_selled_items()
 
 
 if __name__ == '__main__':
