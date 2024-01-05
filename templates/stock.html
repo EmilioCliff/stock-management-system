@@ -2,22 +2,20 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <a href="{{ url_for('add') }}" class="text-decoration-none">
         <div class="col d-flex justify-content-end">
-            <button type="button" class="btn btn-outline-success btn-sm">
+              <a href="{{ url_for('add') }}" class="btn btn-outline-success btn-sm rounded text-decoration-none my-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
                 <div class="row">
                 <div class="col-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
                         <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                      </svg>
+                    </svg>
                 </div>
                 <div class="col text-start">
                     <p>Add new item</p>
                 </div>
                 </div>
-            </button>
-        </div>
         </a>
+        </div>
     </div>
     <nav class="navbar bg-body-tertiary my-2">
       <div class="container-fluid">
@@ -37,7 +35,8 @@
           </form>
         </div>
       </div> -->
-<table class="table table-bordered">
+<div class="wrapper overflow-auto border-div">
+<table class="wrapper overflow-auto table table-bordered">
     <thead class="table-dark text-center">
       <tr class="p-2">
         <th scope="col">Stock Name</th>
@@ -68,6 +67,7 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
   </div>
   <!-- Modal -->
 <div class="modal fade" id="delBtn" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">

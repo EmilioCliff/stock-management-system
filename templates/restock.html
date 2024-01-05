@@ -2,7 +2,7 @@
 {% block content %}
   <form role="search" method="post" action="{{ url_for('restock') }}">
     <div class="mb-3">
-      <label for="stockName" class="form-label">Item Name Sold</label>
+      <label for="stockName" class="form-label">Item Restocked</label>
       <div class="input-group">
         <input type="text" class="form-control" id="stockName" name="stockName" oninput="showStockOptions(this.value)" autocomplete="off">
       </div>
@@ -13,7 +13,7 @@
       </ul>
     </div>
     <div class="mb-3">
-      <label for="restockQuantity" class="form-label">Sold Quantity</label>
+      <label for="restockQuantity" class="form-label">Restocked Quantity</label>
       <input type="number" class="form-control" id="restockQuantity" name="restockQuantity" autocomplete="off">
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>

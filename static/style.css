@@ -14,6 +14,10 @@ span {
 #menu {
     border-bottom: 1px solid black;
 }
+.border-div{
+    border-left: 1px solid gray;
+    border-right: 1px solid gray;
+}
 .btn-toggle-nav a {
     display: inline-flex;
     padding: 0.1875rem 0.5rem;
@@ -25,9 +29,33 @@ span {
     color: rgba(0, 0, 0, .85);
     background-color: #d2f4ea;
 }
-/* .link-dark {
-    color: #212529;
+body, html {
+  height: 100%;
+  margin: 0;
+  /* overflow: hidden; */
 }
-.fw-normal {
-    font-weight: 400!important;
-} */
+.container-fluid{
+    overflow: auto;
+}
+.full-height-container {
+  height: 83vh;
+}
+.full-height-sidebar {
+    height: 100vh;
+  }
+.wrapper {
+    /* height: 70%; */
+    width: 100%;
+    max-height: 70%; 
+    /* margin-bottom: -30px; */
+    /* padding-bottom: 30px;   */
+    overflow: auto;
+} 
+.table-overflow{
+  overflow: auto;
+}
+.footer {
+    height: 30px;
+    background-color: #f5f5f5;
+    padding-top: 20px; 
+}

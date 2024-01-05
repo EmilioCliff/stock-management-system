@@ -90,7 +90,8 @@ class StockManager:
 
     def number_of_selled_items(self):
         transactions = db.session.execute(db.select(Transactions).order_by(Transactions.item_id)).scalars()
-        quantity_sold = {}
+        # quantity_sold = {}
+        quantity_sold = []
         count = 0
         current_transaction = None
         for transaction in transactions:
@@ -100,16 +101,21 @@ class StockManager:
                 count += transaction.sold_quantity
             else:
                 item = Stock.query.get_or_404(current_transaction)
-                quantity_sold[item.item_name] = {"quantity_sold":count}
+                quantity_sold.append([item.item_name, count])
+                # quantity_sold[item.item_name] = count
                 current_transaction = transaction.item_id
                 count = transaction.sold_quantity
         if current_transaction is not None:
             item = Stock.query.get_or_404(current_transaction)
-            quantity_sold[item.item_name] = {"quantity_sold": count}
-        for item, details in quantity_sold.items():
-            item_to_calculate = Stock.query.filter_by(item_name=item).first()
-            profit = (item_to_calculate.selling_price - item_to_calculate.buying_price)*details['quantity_sold']
-            print(f"{item}:{details['quantity_sold']} has made a profit of {profit}")
+            quantity_sold.append([item.item_name, count])
+        data_plus_profit = []
+        print(quantity_sold)
+        for data in quantity_sold:
+            item_to_calculate = Stock.query.filter_by(item_name=data[0]).first()
+            profit = (item_to_calculate.selling_price - item_to_calculate.buying_price)*data[1]
+            data_plus_profit.append(data + [profit])
+        sorted_data_list = sorted(data_plus_profit, key=lambda x: x[1], reverse=True)
+        return sorted_data_list
 
 
 app = Flask(__name__)
@@ -163,7 +169,7 @@ def add():
 
 @app.route("/stock", methods=['POST', 'GET'])
 def stock():
-    all_stocks = db.session.execute(db.select(Stock)).scalars().all()
+    all_stocks = db.session.query(Stock).order_by(Stock.item_name).all()
     if request.method == "POST":
         search_query = request.form.get('search', '')
         results = Stock.query.filter(Stock.item_name.ilike(f'%{search_query}%')).all()
@@ -228,6 +234,11 @@ def sold():
         return redirect(url_for('stock'))
     return render_template("sold.html", stocks=all_items)
 
+@app.route("/profit")
+def profit():
+    data_sold = stock_manager.number_of_selled_items()
+    return render_template("profit.html", all_data=data_sold)
+
 # with app.app_context():
     # stock_manager = StockManager()
     # stock_manager.sell_item("Best Gin", 6)
@@ -244,7 +255,7 @@ def sold():
     # stock_manager.add_item("General Meakings", 400, 750, 13)
     # stock_manager.display_stock()
     # stock_manager.number_of_selled_items()
-
+    # stock_manager.number_of_selled_items()
 
 if __name__ == '__main__':
     app.run(debug=True)
