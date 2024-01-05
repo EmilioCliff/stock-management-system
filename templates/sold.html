@@ -1,0 +1,55 @@
+{% extends 'index.html' %}
+{% block content %}
+  <form role="search" method="post" action="{{ url_for('sold') }}">
+    <div class="mb-3">
+      <label for="stockName" class="form-label">Item Sold</label>
+      <div class="input-group">
+        <input type="text" class="form-control" id="stockName" name="stockName" oninput="showStockOptions(this.value)" autocomplete="off">
+      </div>
+      <ul id="stockOptions" class="list-group mt-2" style="display: none;">
+        {% for stock in stocks %}
+          <li class="list-group-item" onclick="selectStock('{{ stock.item_name }}')">{{ stock.item_name }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="mb-3">
+      <label for="restockQuantity" class="form-label">Sold Quantity</label>
+      <input type="number" class="form-control" id="restockQuantity" name="restockQuantity" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+  
+  <script>
+    function showStockOptions(searchTerm) {
+      var stockOptions = document.getElementById("stockOptions");
+  
+      // Filter stocks based on the search term
+      var allStocks = Array.from(stockOptions.children);
+      var filteredStocks = allStocks.filter(function(li) {
+        return li.textContent.toLowerCase().includes(searchTerm.toLowerCase());
+      });
+  
+      // Display the stock options dropdown if there are matches
+      stockOptions.style.display = filteredStocks.length > 0 ? "block" : "none";
+  
+      // Toggle the display property for each stock option based on the search term
+      allStocks.forEach(function(li) {
+        var displayStyle = filteredStocks.includes(li) ? "block" : "none";
+        li.style.display = displayStyle;
+      });
+    }
+  
+    function selectStock(stock) {
+      document.getElementById("stockName").value = stock;
+      document.getElementById("stockOptions").style.display = "none";
+    }
+  
+    // Close the stock options dropdown when clicking outside
+    document.addEventListener("click", function(event) {
+      var stockOptions = document.getElementById("stockOptions");
+      if (event.target.id !== "stockName" && !stockOptions.contains(event.target)) {
+        stockOptions.style.display = "none";
+      }
+    });
+  </script>
+{% endblock %}

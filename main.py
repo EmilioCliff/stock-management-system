@@ -2,10 +2,15 @@ from flask import Flask, current_app, render_template, url_for, redirect, reques
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_bootstrap import Bootstrap5
-from forms import AddForm, EditForm
+from forms import AddForm, EditForm, Restocked, Sold
 
 # Define stockmanager that will have methods for daily operations
 class StockManager:
+    def transact(self, item_id, sold_quantity, added_quantity):
+        transaction = Transactions(item_id=item_id, sold_quantity=sold_quantity, added_quantity=added_quantity)
+        db.session.add(transaction)
+        db.session.commit()
+
     def add_item(self, name, b_price, s_price, quantity=0) -> None:
         with current_app.app_context():
             existing_item = Stock.query.filter_by(item_name=name).first()
@@ -15,6 +20,7 @@ class StockManager:
                 item = Stock(item_name=name, buying_price=b_price, selling_price=s_price, item_quantity=quantity)
                 db.session.add(item)
                 db.session.commit()
+                self.transact(Stock.query.filter_by(item_name=name).first().id, 0, quantity)
                 print(f"{item.item_name} added to db")
     
     def remove_item(self, name):
@@ -29,11 +35,11 @@ class StockManager:
 
     def add_item_quantity(self, name, quantity):
         with current_app.app_context():
+            print(name, quantity)
             item = Stock.query.filter_by(item_name=name).first()
             if item:
-                transaction = Transactions(item_id=item.id, sold_quantity=0, added_quantity=quantity)
+                self.transact(item.id, 0, quantity)
                 item.item_quantity += quantity
-                db.session.add(transaction)
                 db.session.commit()
                 print(f"added item quantity by {quantity}")
             else:
@@ -67,9 +73,10 @@ class StockManager:
                 print(f"Subtracted {quantity_sold} from {item.item_quantity}")
                 if item.item_quantity >= quantity_sold:
                     item.item_quantity -= quantity_sold
-                    transaction = Transactions(item_id=item.id, sold_quantity=quantity_sold, added_quantity=0)
-                    db.session.add(transaction)
-                    db.session.commit()
+                    self.transact(item.id, quantity_sold, 0)
+                    # transaction = Transactions(item_id=item.id, sold_quantity=quantity_sold, added_quantity=0)
+                    # db.session.add(transaction)
+                    # db.session.commit()
                 else:
                     print(f"Not enough quantity to subtract {quantity_sold} from {item.item_quantity}")
             else:
@@ -189,6 +196,37 @@ def edit(stock_id):
         return redirect(url_for('stock'))
     return render_template('edit.html', form=edit_form)
 
+@app.route("/intransactions")
+def intransactions():
+    all_transactions = db.session.execute(db.select(Transactions)).scalars().all()
+    buy_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.added_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.added_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.added_quantity > 0]
+    return render_template("purchasetransactions.html", transactions=buy_transactions)
+
+@app.route("/outtransactions")
+def outtransactions():
+    all_transactions = db.session.execute(db.select(Transactions)).scalars().all()
+    sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.sold_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.sold_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.sold_quantity > 0]
+    return render_template("soldtransactions.html", transactions=sold_transactions)
+
+@app.route("/restock", methods=['POST', 'GET'])
+def restock():
+    all_items = Stock.query.all()
+    if request.method == "POST":
+        item_restocked_name = request.form.get('stockName', '')
+        added_quantity = request.form.get('restockQuantity', '')
+        stock_manager.add_item_quantity(item_restocked_name, int(added_quantity))
+        return redirect(url_for('stock'))
+    return render_template("restock.html", stocks=all_items)
+
+@app.route("/sold", methods=['POST', 'GET'])
+def sold():
+    all_items = Stock.query.all()
+    if request.method == "POST":
+        item_sold_name = request.form.get('stockName', '')
+        sold_quantity = request.form.get('restockQuantity', '')
+        stock_manager.sell_item(item_sold_name, int(sold_quantity))
+        return redirect(url_for('stock'))
+    return render_template("sold.html", stocks=all_items)
 
 # with app.app_context():
     # stock_manager = StockManager()

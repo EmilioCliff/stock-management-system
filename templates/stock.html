@@ -19,7 +19,16 @@
         </div>
         </a>
     </div>
-    <div class="row">
+    <nav class="navbar bg-body-tertiary my-2">
+      <div class="container-fluid">
+        <!-- <a class="navbar-brand">Navbar</a> -->
+        <form class="d-flex flex-grow-1" role="search" method="post" action="{{ url_for('stock') }}">
+          <input class="form-control search mb-0 me-2" name="search" id="search" autocomplete="off" type="search" placeholder="Search" aria-label="Search">
+          <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+      </div>
+    </nav>
+    <!-- <div class="row">
         <div class="col-md-6 mx-auto">
           <form class="form-inline" method="post" action="{{ url_for('stock') }}">
             <div class="row input-group w-100">
@@ -27,7 +36,7 @@
             </div>
           </form>
         </div>
-      </div>
+      </div> -->
 <table class="table table-bordered">
     <thead class="table-dark text-center">
       <tr class="p-2">

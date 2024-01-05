@@ -1,0 +1,25 @@
+{% extends 'index.html' %}
+{% block content %}
+<div class="container-fluid">
+    <table class="table table-bordered">
+        <thead class="table-dark text-center">
+          <tr class="p-2">
+            <th scope="col">Stock Name</th>
+            <th scope="col">Quantity Added</th>
+            <th scope="col">Price Purchased</th>
+            <th scope="col">Date</th>
+          </tr>
+        </thead>
+        <tbody class="table-group-divider">
+          {%for transaction in transactions %}
+          <tr>
+            <td class="p-2">{{ transaction[0] }}</td>
+            <td class="text-center p-2">{{ transaction[1] }}</td>
+            <td class="text-center p-2">{{ transaction[2] }}</td>
+            <td class="text-center p-2">{{ transaction[3] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+</div>
+{% endblock %}

@@ -12,5 +12,22 @@ span {
     font-size: large;
 }
 #menu {
-    border-bottom: 2px solid black;
+    border-bottom: 1px solid black;
 }
+.btn-toggle-nav a {
+    display: inline-flex;
+    padding: 0.1875rem 0.5rem;
+    margin-top: 0.125rem;
+    margin-left: 1.25rem;
+    text-decoration: none;
+}
+.btn-toggle:hover, .btn-toggle:focus {
+    color: rgba(0, 0, 0, .85);
+    background-color: #d2f4ea;
+}
+/* .link-dark {
+    color: #212529;
+}
+.fw-normal {
+    font-weight: 400!important;
+} */
