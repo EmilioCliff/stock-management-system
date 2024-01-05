@@ -1,6 +1,8 @@
-from flask import Flask, current_app, render_template, url_for
+from flask import Flask, current_app, render_template, url_for, redirect, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask_bootstrap import Bootstrap5
+from forms import AddForm, EditForm
 
 # Define stockmanager that will have methods for daily operations
 class StockManager:
@@ -37,11 +39,22 @@ class StockManager:
             else:
                 print("Couldn't add item quantity")
 
-    def update_item_price(self, name, new_price):
+
+    def update_item_s_price(self, name, new_price):
         with current_app.app_context():
             item = Stock.query.filter_by(item_name=name).first()
             if item:
                 item.selling_price = new_price
+                db.session.commit()
+                print(f"Changed item price to {new_price}")
+            else:
+                print("Couldn't change item price")
+
+    def update_item_b_price(self, name, new_price):
+        with current_app.app_context():
+            item = Stock.query.filter_by(item_name=name).first()
+            if item:
+                item.buying_price = new_price
                 db.session.commit()
                 print(f"Changed item price to {new_price}")
             else:
@@ -93,7 +106,8 @@ class StockManager:
 
 
 app = Flask(__name__)
-
+app.config['SECRET_KEY'] = 'asasdsdfwefqwfsdvfvdf'
+Bootstrap5(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stock-management.db'
 db = SQLAlchemy(app)
@@ -121,9 +135,60 @@ class Transactions(db.Model):
 with app.app_context():
     db.create_all()
 
+stock_manager = StockManager()
+
 @app.route("/")
-def home():
-    return render_template()
+def dashboard():
+    return render_template("dashboard.html")
+
+@app.route("/add", methods=['POST', 'GET'])
+def add():
+    add_form = AddForm()
+    if request.method == 'POST':
+        print('Adding')
+        name = add_form.item_name.data
+        b_price = add_form.buying_price.data
+        s_price = add_form.selling_price.data
+        quantity = add_form.item_quantity.data
+        stock_manager.add_item(name, b_price, s_price, quantity)
+        return redirect(url_for('stock'))
+    return render_template("add.html", form=add_form) 
+
+@app.route("/stock", methods=['POST', 'GET'])
+def stock():
+    all_stocks = db.session.execute(db.select(Stock)).scalars().all()
+    if request.method == "POST":
+        search_query = request.form.get('search', '')
+        results = Stock.query.filter(Stock.item_name.ilike(f'%{search_query}%')).all()
+        return render_template("stock.html", all_stocks=results)
+    return render_template("stock.html", all_stocks=all_stocks)
+
+@app.route("/stock/delete/<int:stockId>", methods=['POST', 'GET'])
+def delete(stockId):
+    print('Before printing')
+    if request.method == "POST":
+        stock_to_delete = Stock.query.filter_by(id=stockId).first().item_name
+        stock_manager.remove_item(stock_to_delete)
+        print('Deleting')
+    return redirect(url_for('home'))
+
+
+@app.route("/edit/<int:stock_id>", methods=['POST', 'GET'])
+def edit(stock_id):
+    stock_to_edit = db.get_or_404(Stock, stock_id)
+    edit_form = EditForm(
+        item_name=stock_to_edit.item_name,
+        buying_price=stock_to_edit.buying_price,
+        selling_price=stock_to_edit.selling_price
+    )
+    if request.method == "POST":
+        new_b_price = float(edit_form.buying_price.data)
+        new_s_price = float(edit_form.selling_price.data)
+        stock_manager.update_item_b_price(stock_to_edit.item_name, new_b_price)
+        stock_manager.update_item_s_price(stock_to_edit.item_name, new_s_price)
+        return redirect(url_for('stock'))
+    return render_template('edit.html', form=edit_form)
+
 
 # with app.app_context():
     # stock_manager = StockManager()

@@ -3,3 +3,14 @@ h1 {
     font-weight: 700;
     font-family: 'Arial', sans-serif;
 }
+svg {
+    color: black;
+}
+span {
+    color: black;
+    font-weight: 500;
+    font-size: large;
+}
+#menu {
+    border-bottom: 2px solid black;
+}
