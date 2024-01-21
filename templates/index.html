@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Management System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet"  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body style="background-color: #F3F8FF;">
+<body style="background-color: #F3F8FF; width: 100%; height: 100vh;">
     <header class="p-2" style="background-color: #11009E;">
         <nav>
         <div class="container-fluid">
@@ -97,12 +98,12 @@
           </a>
         </li>
         <li class="d-flex justify-content-start align-items-center nav-item">
-          <a href="#" class="nav-link text-white w-100 btn btn-toggle rounded collapsed d-flex align-items-center">
+          <a href="{{ url_for('kiraka') }}" class="nav-link text-white w-100 btn btn-toggle rounded collapsed d-flex align-items-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard-check-fill" viewBox="0 0 16 16">
                 <path d="M6.5 0A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0zm3 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5z"/>
                 <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1A2.5 2.5 0 0 1 9.5 5h-3A2.5 2.5 0 0 1 4 2.5zm6.854 7.354-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L7.5 10.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
               </svg>
-            <span class="ms-2">Selling Item</span>
+            <span class="ms-2">Kiraka</span>
           </a>
         </li>
         <li class="d-flex justify-content-start align-items-center nav-item">
@@ -227,5 +228,26 @@
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+    <script>
+      // Initialize Bootstrap Datepicker
+      $('#startDate').datepicker({
+          format: 'yyyy-mm-dd',  // Specify the date format
+          autoclose: true,
+          todayHighlight: true,
+          startDate: '2022-10-04',
+          endDate: '2023-02-14',
+          clearBtn: true
+      });
+    
+      $('#endDate').datepicker({
+          format: 'yyyy-mm-dd',  // Specify the date format
+          autoclose: true,
+          todayHighlight: true,
+          startDate: '2022-10-04',
+          endDate: '2023-02-14',
+          clearBtn: true
+      });
+    </script>
 </body>
 </html>

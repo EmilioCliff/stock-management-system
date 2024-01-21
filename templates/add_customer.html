@@ -1,10 +1,14 @@
 {% extends 'index.html' %}
 {% block content %}
-  <form role="search" method="post" action="{{ url_for('restock') }}">
+  <form role="search" method="post" action="{{ url_for('new_deni') }}">
     <div class="mb-3">
-      <label for="stockName" class="form-label">Item Restocked</label>
+        <label for="customerName" class="form-label">Customer Name</label>
+        <input type="text" class="form-control" id="customerName" name="customerName" autocomplete="off">
+      </div>
+    <div class="mb-3">
+      <label for="stockName" class="form-label">Item Name</label>
       <div class="input-group">
-        <input type="text" class="form-control" id="stockName" name="stockName" oninput="showStockOptions(this.value)" autocomplete="nope">
+        <input type="text" class="form-control" id="stockName" name="stockName" oninput="showStockOptions(this.value)" autocomplete="off">
       </div>
       <ul id="stockOptions" class="list-group mt-2" style="display: none;">
         {% for stock in stocks %}
@@ -13,10 +17,10 @@
       </ul>
     </div>
     <div class="mb-3">
-      <label for="restockQuantity" class="form-label">Restocked Quantity</label>
-      <input type="number" class="form-control" id="restockQuantity" name="restockQuantity" autocomplete="off">
+      <label for="burrowedQuantity" class="form-label">Item Quantity Lended</label>
+      <input type="number" class="form-control" id="burrowedQuantity" name="burrowedQuantity" autocomplete="off">
     </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Add Customer</button>
   </form>
   
   <script>

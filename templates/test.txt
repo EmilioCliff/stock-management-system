@@ -1,0 +1,10 @@
+<!-- <button type="button" class="btn btn-danger me-2 delete-btn" data-toggle="modal" data-target="#delBtn" data-stock-id="{{ stock.id }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">Delete</button> -->
+{% for data in all_data %}
+<li>{{ data.customer_name }}, {{ data.items_owned}}, {{ data.items_owned['items'][0] }}, {{ data.items_owned['items'][0]['quantity_borrowed'] * data.items_owned['items'][0]['price_bought'] }}</li>
+{% endfor %}
+{
+    'items_owned': [
+        {'item_name': item_name, 'quantity_borrowed': quantity_borrowed, 'price_bought': item.selling_price},
+        {'item_name': item_name, 'quantity_borrowed': quantity_borrowed, 'price_bought': item.selling_price}
+            ]
+}

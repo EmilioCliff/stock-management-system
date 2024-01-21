@@ -1,6 +1,13 @@
 {% extends 'index.html' %}
 {% block content %}
 <div class="container-fluid">
+  <form action="">
+    <div class="col-md-6 input-group date input-daterange">
+      <input type="text" class="form-control" id="startDate" placeholder="Select start date" data-provide="datepicker">
+      <div class="input-group-addon">to</div>
+      <input type="text" class="form-control" id="endDate" placeholder="Select end date" data-provide="datepicker">
+  </div>
+  </form>
     <table class="table table-bordered">
         <thead class="table-dark text-center">
           <tr class="p-2">
@@ -9,10 +16,6 @@
             <th scope="col">Profit</th>
           </tr>
         </thead>
-        <!-- for item, details in quantity_sold.items():
-        item_to_calculate = Stock.query.filter_by(item_name=item).first()
-        profit = (item_to_calculate.selling_price - item_to_calculate.buying_price)*details['quantity_sold']
-        print(f"{item}:{details['quantity_sold']} has made a profit of {profit}") -->
         <tbody class="table-group-divider">
           {%for data in all_data %}
           <tr>

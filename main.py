@@ -3,11 +3,19 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_bootstrap import Bootstrap5
 from forms import AddForm, EditForm, Restocked, Sold
+import json
 
 # Define stockmanager that will have methods for daily operations
 class StockManager:
     def transact(self, item_id, sold_quantity, added_quantity):
-        transaction = Transactions(item_id=item_id, sold_quantity=sold_quantity, added_quantity=added_quantity)
+        item = Stock.query.get_or_404(item_id)
+        action = {
+            'purchase': {'quantity':added_quantity, 'price':item.buying_price}, 
+            'sold': {'quantity':sold_quantity, 'price_sold':item.selling_price, 'b_price': item.buying_price}
+            }
+        action_json = json.dumps(action)
+        # transaction = Transactions(item_id=item_id, sold_quantity=sold_quantity, added_quantity=added_quantity)
+        transaction = Transactions(item_id=item_id, actions=action_json)
         db.session.add(transaction)
         db.session.commit()
 
@@ -98,24 +106,74 @@ class StockManager:
             if current_transaction == None:
                 current_transaction = transaction.item_id
             if current_transaction == transaction.item_id:
-                count += transaction.sold_quantity
+                # count += transaction.sold_quantity
+                count += transaction.actions['sold']['quantity']
             else:
                 item = Stock.query.get_or_404(current_transaction)
-                quantity_sold.append([item.item_name, count])
+                quantity_sold.append([item.item_name, count, transaction.actions['sold']['b_price'], transaction.actions['sold']['price_sold']])
                 # quantity_sold[item.item_name] = count
                 current_transaction = transaction.item_id
-                count = transaction.sold_quantity
+                # count = transaction.sold_quantity
+                count = transaction.actions['sold']['quantity']
         if current_transaction is not None:
             item = Stock.query.get_or_404(current_transaction)
-            quantity_sold.append([item.item_name, count])
+            quantity_sold.append([item.item_name, count, transaction.actions['sold']['b_price'], transaction.actions['sold']['price_sold']])
         data_plus_profit = []
         print(quantity_sold)
         for data in quantity_sold:
-            item_to_calculate = Stock.query.filter_by(item_name=data[0]).first()
-            profit = (item_to_calculate.selling_price - item_to_calculate.buying_price)*data[1]
+            # item_to_calculate = Stock.query.filter_by(item_name=data[0]).first()
+            # profit = (item_to_calculate.selling_price - item_to_calculate.buying_price)*data[1]
+            profit = (data[3] - data[2])*data[1]
             data_plus_profit.append(data + [profit])
         sorted_data_list = sorted(data_plus_profit, key=lambda x: x[1], reverse=True)
         return sorted_data_list
+    
+    def add_kiraka(self, customer_name, item_name, quantity_borrowed):
+        item = Stock.query.filter_by(item_name=item_name).first()
+        print(item)
+        # items_owned = {
+        #     'item_name': item_name,
+        #     'quantity_borrowed': quantity_borrowed,
+        #     'price_bought': item.selling_price
+        # }
+        items_owned = {
+            'items': [{'item_name': item_name, 'quantity_borrowed': quantity_borrowed, 'price_bought': item.selling_price}]
+        }
+        deni = Kiraka(customer_name=customer_name, items_owned=items_owned)
+        db.session.add(deni)
+        db.session.commit()
+
+    def add_to_existing_kiraka(self, customer_name, item_name, quantity_borrowed):
+        deni = Kiraka.query.filter_by(customer_name=customer_name).first()
+        present = 0
+        for item in deni.items_owned['items']:
+            if item['item_name'] == item_name:
+                item['quantity_borrowed'] += quantity_borrowed
+                present = 1
+                break
+        if present == 0:
+            item = Stock.query.filter_by(item_name=item_name).first()
+            new_item = {'item_name': item_name, 'quantity_borrowed': quantity_borrowed, 'price_bought':item.selling_price}
+            deni.items_owned['items'].append(new_item)
+        db.session.commit()
+
+    def calculate_total_owned(self, customer_name):
+        deni = Kiraka.query.filter_by(customer_name=customer_name).first()
+        total = 0
+        for item in deni.items_owned['items']:
+            total += item['quantity_borrowed'] * item['price_bought']
+        return total
+    
+    def pay_item_owned(self, customer_name, item_name):
+        deni = Kiraka.query.filter_by(customer_name=customer_name).first()
+        for item in deni.items_owned['items']:
+            if item['item_name'] == item_name:
+                deni.items_owned['items'].delete(item)
+                break
+    
+
+        
+
 
 
 app = Flask(__name__)
@@ -141,9 +199,28 @@ class Transactions(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey("stock.id"))
     itemname = db.relationship("Stock", back_populates="transactions")
-    sold_quantity = db.Column(db.Integer, nullable=False)
-    added_quantity = db.Column(db.Integer, nullable=False)
+    actions = db.Column(db.JSON)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    """
+    {
+        'purchase': {'quantity':added_quantity, 'price':item.buying_price}, 
+        'sold': {'quantity':sold_quantity, 'price_sold':item.selling_price, 'b_price': item.buying_price}
+    }
+    """
+    # sold_quantity = db.Column(db.Integer, nullable=False)
+    # added_quantity = db.Column(db.Integer, nullable=False)
+
+class Kiraka(db.Model):
+    __tablename__ = "Kiraka"
+
+    id = db.Column(db.Integer, primary_key=True)
+    customer_name = db.Column(db.String(250), unique=True,nullable=False)
+    items_owned = db.Column(db.JSON)
+    """
+    {
+        'items': [{'item_name': item_name, 'quantity_borrowed': quantity_borrowed, 'price_bought': item.selling_price}]
+    }
+    """
 
 with app.app_context():
     db.create_all()
@@ -205,13 +282,15 @@ def edit(stock_id):
 @app.route("/intransactions")
 def intransactions():
     all_transactions = db.session.execute(db.select(Transactions)).scalars().all()
-    buy_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.added_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.added_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.added_quantity > 0]
+    # buy_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.added_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.added_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.added_quantity > 0]
+    buy_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, json.loads(transaction.actions)['purchase']['quantity'], json.loads(transaction.actions)['purchase']['price']*json.loads(transaction.actions)['purchase']['quantity'], (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if json.loads(transaction.actions)['purchase']['quantity'] > 0]
     return render_template("purchasetransactions.html", transactions=buy_transactions)
 
 @app.route("/outtransactions")
 def outtransactions():
     all_transactions = db.session.execute(db.select(Transactions)).scalars().all()
-    sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.sold_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.sold_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.sold_quantity > 0]
+    # sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.sold_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.sold_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.sold_quantity > 0]
+    sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, json.loads(transaction.actions)['sold']['quantity'], json.loads(transaction.actions)['sold']['price']*json.loads(transaction.actions)['sold']['quantity'], (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if json.loads(transaction.actions)['sold']['quantity'] > 0]
     return render_template("soldtransactions.html", transactions=sold_transactions)
 
 @app.route("/restock", methods=['POST', 'GET'])
@@ -238,6 +317,50 @@ def sold():
 def profit():
     data_sold = stock_manager.number_of_selled_items()
     return render_template("profit.html", all_data=data_sold)
+
+@app.route("/kiraka", methods=['POST', 'GET'])
+def kiraka():
+    kiraka_data = Kiraka.query.all()
+    if request.method == "POST":
+       search_query = request.form.get('search', '')
+       results = Kiraka.query.filter(Kiraka.customer_name.ilike(f'%{search_query}%')).all()
+       return render_template("kiraka.html", all_data=results)
+    return render_template("kiraka.html", all_data=kiraka_data)
+
+@app.route("/new_deni", methods=['POST', 'GET'])
+def new_deni():
+    all_items = Stock.query.all()
+    if request.method == "POST":
+        customer_name = request.form.get('customerName', '')
+        item_burrowed = request.form.get('stockName', '')
+        quantity_burrowed = int(request.form.get('burrowedQuantity', ''))
+        stock_manager.add_kiraka(customer_name=customer_name, item_name=item_burrowed, quantity_borrowed=quantity_burrowed)
+        return redirect(url_for('kiraka'))
+    return render_template('add_customer.html', stocks=all_items)
+
+@app.route("/existing_deni/<int:customer_id>", methods=['POST', 'GET'])
+def existing_deni(customer_id):
+    customer_details = Kiraka.query.get_or_404(customer_id)
+    all_items_owned = customer_details.items_owned['items']
+    if request.method == "POST":
+        customer_name = customer_details.customer_name
+        item_burrowed = request.form.get('stockName', '')
+        quantity_burrowed = int(request.form.get('burrowedQuantity', ''))
+        stock_manager.add_to_existing_kiraka(customer_name=customer_name, item_name=item_burrowed, quantity_borrowed=quantity_burrowed)
+        return redirect(url_for('kiraka'))
+    return render_template('add_kiraka.html', stocks=all_items_owned, customer=customer_details)
+
+@app.route("/pay_deni/<int:customer_id>", methods=['POST', 'GET'])
+def pay_deni(customer_id):
+    all_items = Stock.query.all()
+    if request.method == "POST":
+        customer_name = request.args.get('customer_name')
+        item_burrowed = request.form.get('stockName', '')
+        quantity_burrowed = request.form.get('burrowedQuantity', '')
+        stock_manager.add_to_existing_kiraka(customer_name=customer_name, item_name=item_burrowed, quantity_borrowed=quantity_burrowed)
+        return redirect(url_for('kiraka'))
+    return render_template('add_kiraka.html', stocks=all_items)
+
 
 # with app.app_context():
     # stock_manager = StockManager()

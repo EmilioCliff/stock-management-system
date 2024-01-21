@@ -1,0 +1,21 @@
+{% extends 'index.html' %}
+{% block content %}
+  <form role="search" method="post" action="{{ url_for('existing_deni', customer_id=customer.id) }}">
+    <div class="mb-3">
+      <label for="stockName" class="form-label">Item Name</label>
+      <div class="input-group">
+        <select class="form-control" id="stockName" name="stockName">
+            <option value="" selected disabled>Select Item</option>
+            {% for stock in stocks %}
+              <option value="{{ stock.item_name }}">{{ stock.item_name }} - {{ stock.quantity_borrowed }} owned Total {{ (stock.quantity_borrowed|int) * stock.price_bought }}</option>
+            {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="burrowedQuantity" class="form-label">Item Quantity Lended</label>
+      <input type="number" class="form-control" id="burrowedQuantity" name="burrowedQuantity" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-primary">Add Kiraka</button>
+  </form>
+{% endblock %}
