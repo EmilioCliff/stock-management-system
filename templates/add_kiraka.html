@@ -1,5 +1,6 @@
 {% extends 'index.html' %}
 {% block content %}
+<div class="form-centered p-3 shadow">
   <form role="search" method="post" action="{{ url_for('existing_deni', customer_id=customer.id) }}">
     <div class="mb-3">
       <label for="stockName" class="form-label">Item Name</label>
@@ -18,4 +19,5 @@
     </div>
     <button type="submit" class="btn btn-primary">Add Kiraka</button>
   </form>
+</div>
 {% endblock %}

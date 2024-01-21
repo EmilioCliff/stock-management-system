@@ -7,6 +7,15 @@
     font-weight: 500px;
     border-radius: 30px;
 }
+.form-centered {
+    position: absolute;
+    top: 30%;
+    left: 40%;
+    width: 500px;
+    border-radius: 6px;
+    border: 1px solid black;
+    /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); */
+}
 .popup {
     width: 400px;
     background: #fff;
@@ -70,7 +79,7 @@ span {
     background-color: #d2f4ea;
 }
 body, html {
-  height: 100%;
+  height: 100vh;
   margin: 0;
   /* overflow: hidden; */
 }

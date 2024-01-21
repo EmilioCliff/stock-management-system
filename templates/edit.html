@@ -2,7 +2,7 @@
 {% extends 'index.html' %}
 {% block content %}
 <main class="mb-4">
-    <div class="container bordered rounded shadow my-4 p-3">
+    <div class="form-centered p-3 shadow">
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
           {{ render_form(form, novalidate=True, button_map={"submit": "success"}) }}

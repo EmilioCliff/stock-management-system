@@ -1,13 +1,27 @@
-{% from "bootstrap5/form.html" import render_form %}
 {% extends 'index.html' %}
 {% block content %}
 <main class="mb-4">
-    <div class="container bordered rounded shadow my-4 p-3">
-      <div class="row">
-        <div class="col-lg-8 col-md-10 mx-auto">
-          {{ render_form(form, novalidate=True, button_map={"submit": "success"}) }}
+    <!-- <div class="container bordered rounded shadow my-4 p-3"> -->
+      <div class="form-centered p-3 shadow">
+        <form role="search" method="post" action="{{ url_for('add') }}" autocomplete="off">
+          <div class="mb-3">
+              <label for="itemName" class="form-label">Item Name</label>
+              <input type="text" class="form-control" id="itemName" name="itemName" autocomplete="off">
+          </div>
+          <div class="mb-3">
+            <label for="itemQuantity" class="form-label">Item Quantity</label>
+            <input type="text" class="form-control" id="itemQuantity" name="itemQuantity" autocomplete="off">
         </div>
+        <div class="mb-3">
+          <label for="buyingPrice" class="form-label">Buying Price</label>
+          <input type="text" class="form-control" id="buyingPrice" name="buyingPrice" autocomplete="off">
       </div>
+      <div class="mb-3">
+        <label for="sellingPrice" class="form-label">Selling Price</label>
+        <input type="text" class="form-control" id="sellingPrice" name="sellingPrice" autocomplete="off">
+    </div>
+          <button type="submit" class="btn btn-primary">Add New Item</button>
+        </form>
     </div>
   </main>
 {% endblock %}

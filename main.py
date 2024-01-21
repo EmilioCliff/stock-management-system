@@ -233,16 +233,19 @@ def dashboard():
 
 @app.route("/add", methods=['POST', 'GET'])
 def add():
-    add_form = AddForm()
+    # add_form = AddForm()
     if request.method == 'POST':
-        print('Adding')
-        name = add_form.item_name.data
-        b_price = add_form.buying_price.data
-        s_price = add_form.selling_price.data
-        quantity = add_form.item_quantity.data
+        name = request.form.get("itemName", "")
+        b_price = request.form.get("buyingPrice", "")
+        s_price = request.form.get("sellingPrice", "")
+        quantity = request.form.get("itemQuantity", "")
+        # name = add_form.item_name.data
+        # b_price = add_form.buying_price.data
+        # s_price = add_form.selling_price.data
+        # quantity = add_form.item_quantity.data
         stock_manager.add_item(name, b_price, s_price, quantity)
         return redirect(url_for('stock'))
-    return render_template("add.html", form=add_form) 
+    return render_template("add.html") 
 
 @app.route("/stock", methods=['POST', 'GET'])
 def stock():
@@ -253,14 +256,14 @@ def stock():
         return render_template("stock.html", all_stocks=results)
     return render_template("stock.html", all_stocks=all_stocks)
 
-@app.route("/stock/delete/<int:stockId>", methods=['POST', 'GET'])
-def delete(stockId):
-    print('Before printing')
-    if request.method == "POST":
-        stock_to_delete = Stock.query.filter_by(id=stockId).first().item_name
-        stock_manager.remove_item(stock_to_delete)
-        print('Deleting')
-    return redirect(url_for('home'))
+@app.route("/stock/delete/", methods=['POST', 'GET'])
+def delete():
+    stockId = request.args.get('stock_id')
+    print(stockId)
+    stock_to_delete = Stock.query.filter_by(id=stockId).first().item_name
+    stock_manager.remove_item(stock_to_delete)
+    print('Deleting')
+    return redirect(url_for('stock'))
 
 
 @app.route("/edit/<int:stock_id>", methods=['POST', 'GET'])
@@ -290,7 +293,7 @@ def intransactions():
 def outtransactions():
     all_transactions = db.session.execute(db.select(Transactions)).scalars().all()
     # sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.sold_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.sold_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.sold_quantity > 0]
-    sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, json.loads(transaction.actions)['sold']['quantity'], json.loads(transaction.actions)['sold']['price']*json.loads(transaction.actions)['sold']['quantity'], (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if json.loads(transaction.actions)['sold']['quantity'] > 0]
+    sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, json.loads(transaction.actions)['sold']['quantity'], json.loads(transaction.actions)['sold']['price_sold']*json.loads(transaction.actions)['sold']['quantity'], (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if json.loads(transaction.actions)['sold']['quantity'] > 0]
     return render_template("soldtransactions.html", transactions=sold_transactions)
 
 @app.route("/restock", methods=['POST', 'GET'])

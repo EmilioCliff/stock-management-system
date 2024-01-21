@@ -1,5 +1,6 @@
 {% extends 'index.html' %}
 {% block content %}
+<div class="form-centered p-3 shadow">
   <form role="search" method="post" action="{{ url_for('restock') }}">
     <div class="mb-3">
       <label for="stockName" class="form-label">Item Restocked</label>
@@ -18,6 +19,7 @@
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>
+</div>
   
   <script>
     function showStockOptions(searchTerm) {

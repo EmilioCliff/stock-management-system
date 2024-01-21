@@ -59,7 +59,7 @@
         <td>
           <div class="d-flex p-2">
             <a href="{{ url_for('edit', stock_id=stock.id) }}" class="text-decoration-none"><button type="button" class="btn btn-success me-2" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">Edit</button></a>
-            <button type="button" class="btn btn-danger me-2 delete-btn" data-toggle="modal" data-target="#delBtn" data-stock-id="{{ stock.id }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">Delete</button>
+            <button type="button" class="btn btn-danger me-2 delete-btn" data-bs-toggle="modal" data-bs-target="#delBtn" onclick="prepareDeleteConfirmation(this)" data-stock-id="{{ stock.id }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">Delete</button>
         </div>
         </td>
       </tr>
@@ -69,7 +69,7 @@
 </div>
   </div>
   <!-- Modal -->
-<div class="modal fade" id="delBtn" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="delBtn" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -81,50 +81,18 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger btn-primary" id="confirmDeleteBtn">Delete</button>
+          <a href="{{ url_for('delete', stock_id='') }}" type="button" class="btn btn-danger btn-primary" id="confirmDeleteBtn" data-stock-id="">Delete</a>
         </div>
       </div>
     </div>
   </div>
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Get all elements with the class 'delete-btn'
-      var deleteButtons = document.querySelectorAll('.delete-btn');
-      // Iterate through each delete button
-      deleteButtons.forEach(function (button) {
-        // Add a click event listener to each delete button
-        button.addEventListener('click', function () {
-          // Get the data-stock-id attribute value from the button
-          var stockId = button.getAttribute('data-stock-id');
-          // Set the href attribute of the Delete button in the modal to include the stockId
-          document.querySelector('.btn-danger.btn-primary').setAttribute('data-stock-id', stockId);
-          // Open the modal
-          $('#delBtn').modal('show');
-        });
-      });
-      // Add a click event listener to the Delete button in the modal
-      document.querySelector('.btn-danger.btn-primary').addEventListener('click', function () {
-        // Get the data-stock-id attribute value from the Delete button in the modal
-        var stockId = this.getAttribute('data-stock-id');
-        // Perform any delete operation here using AJAX or any other method
-        window.location.href = '/stock/delete' + stockId;
-        // ...
-        // Make an AJAX request to the delete route
-        // $.ajax({
-        //   type: 'POST',
-        //   url: '/stock/delete/' + stockId,
-          // success: function (data) {
-          //   // Redirect to the home page after successful deletion
-          //   window.location.href = '/home';
-          // },
-          // error: function (error) {
-          //   console.error('Error deleting stock item:', error);
-          //   // Handle the error as needed
-          // }
-        });
-        // Close the modal after the delete operation is complete
-        $('#delBtn').modal('hide');
-      });
-    // });
+    function prepareDeleteConfirmation(button) {
+      var stockId = button.getAttribute('data-stock-id');
+      console.log("Stock ID:", stockId);
+      var confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+      confirmDeleteBtn.setAttribute('data-stock-id', stockId);
+      confirmDeleteBtn.href = confirmDeleteBtn.href.replace('stock_id=', 'stock_id=' + stockId);
+    }
   </script>
 {% endblock %}

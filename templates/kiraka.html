@@ -37,15 +37,15 @@
                 <td class="text-center p-2">
                     <div class="d-flex justify-content-center">
                       <!-- <a href="#" class="text-decoration-none btn btn-success mx-4">View</a> -->
-                      <button type="button" class="btn btn-success me-2" onclick="openPopup(this)" data-custom="{{loop.index}}"></button>
+                      <a type="button" class="btn btn-success mx-4" onclick="openPopup(this)" data-custom="{{loop.index}}">View</a>
                       <div class="popup-container" id="popupContainer{{ loop.index }}">
-                        <div class="popup" id="popup{{ loop.index}}">
-                          <h2 id="popupHeading{{ loop.index }}" class="mt-2">{{ data.customer_name }}</h2>
-                          <hr class="mt-1">
+                        <div class="popup text-center p-2" id="popup{{ loop.index}}">
+                            <h2 id="popupHeading{{ loop.index }}" class="mt-2">{{ data.customer_name }}</h2>
+                            <hr class="mt-1">
                           {% for item in data.items_owned['items'] %}
                           <p>{{ item.item_name }} : {{ item.quantity_borrowed }} : </p>
                           {% endfor %}
-                          <button type="button" onclick="closePopup(this)" data-custom="{{loop.index}}" class="btn btn-lg btn-outline-success mt-3 mb-0">Close</button>
+                            <button type="button" onclick="closePopup(this)" data-custom="{{loop.index}}" class="btn btn-lg btn-outline-success mt-3 mb-0">Close</button>
                         </div>
                     </div>
 

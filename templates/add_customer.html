@@ -1,5 +1,6 @@
 {% extends 'index.html' %}
 {% block content %}
+<div class="form-centered p-3 shadow">
   <form role="search" method="post" action="{{ url_for('new_deni') }}">
     <div class="mb-3">
         <label for="customerName" class="form-label">Customer Name</label>
@@ -22,6 +23,7 @@
     </div>
     <button type="submit" class="btn btn-primary">Add Customer</button>
   </form>
+</div>
   
   <script>
     function showStockOptions(searchTerm) {

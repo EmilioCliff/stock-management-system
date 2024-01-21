@@ -8,3 +8,44 @@
         {'item_name': item_name, 'quantity_borrowed': quantity_borrowed, 'price_bought': item.selling_price}
             ]
 }
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Get all elements with the class 'delete-btn'
+      var deleteButtons = document.querySelectorAll('.delete-btn');
+      // Iterate through each delete button
+      deleteButtons.forEach(function (button) {
+        // Add a click event listener to each delete button
+        button.addEventListener('click', function () {
+          // Get the data-stock-id attribute value from the button
+          var stockId = button.getAttribute('data-stock-id');
+          // Set the href attribute of the Delete button in the modal to include the stockId
+          document.querySelector('.btn-danger.btn-primary').setAttribute('data-stock-id', stockId);
+          // Open the modal
+          $('#delBtn').modal('show');
+        });
+      });
+      // Add a click event listener to the Delete button in the modal
+      document.querySelector('.btn-danger.btn-primary').addEventListener('click', function () {
+        // Get the data-stock-id attribute value from the Delete button in the modal
+        var stockId = this.getAttribute('data-stock-id');
+        // Perform any delete operation here using AJAX or any other method
+        window.location.href = '/stock/delete' + stockId;
+        // ...
+        // Make an AJAX request to the delete route
+        // $.ajax({
+        //   type: 'POST',
+        //   url: '/stock/delete/' + stockId,
+          // success: function (data) {
+          //   // Redirect to the home page after successful deletion
+          //   window.location.href = '/home';
+          // },
+          // error: function (error) {
+          //   console.error('Error deleting stock item:', error);
+          //   // Handle the error as needed
+          // }
+        });
+        // Close the modal after the delete operation is complete
+        $('#delBtn').modal('hide');
+      });
+    // });
+  </script>
