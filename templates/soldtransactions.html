@@ -1,12 +1,20 @@
 {% extends 'index.html' %}
 {% block content %}
 <div class="container-fluid mt-5">
-    <table class="table table-bordered">
+  <form role="search" method="post" action="{{ url_for('outtransactions') }}" autocomplete="off">
+    <div class="col-md-6 input-group date input-daterange">
+      <input type="text" class="form-control rounded" id="startDate" name="startDate" placeholder="Select start date" data-provide="datepicker">
+      <div class="input-group-addon mx-3 mt-2">To</div>
+      <input type="text" class="form-control rounded" id="endDate" name="endDate" placeholder="Select end date" data-provide="datepicker">
+      <button class="btn btn-outline-success ms-1 rounded" type="submit">Search</button>
+  </div>
+  </form>
+    <table class="table table-bordered mt-2">
         <thead class="table-dark text-center">
           <tr class="p-2">
             <th scope="col">Stock Name</th>
             <th scope="col">Quantity Sold</th>
-            <th scope="col">Price Purchased</th>
+            <th scope="col">Price Sold</th>
             <th scope="col">Date</th>
           </tr>
         </thead>

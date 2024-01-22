@@ -1,10 +1,11 @@
 from flask import Flask, current_app, render_template, url_for, redirect, request
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_bootstrap import Bootstrap5
 from forms import AddForm, EditForm, Restocked, Sold
 import json
 from sqlalchemy.orm.attributes import flag_modified
+import pytz
 
 # Define stockmanager that will have methods for daily operations
 class StockManager:
@@ -97,9 +98,11 @@ class StockManager:
             for item in items:
                 print(f"ID: {item.id}, ITEM: {item.item_name}, Quantity: {item.item_quantity}, Buying Price: {item.buying_price}, Selling Price: {item.selling_price}")
 
-    def number_of_selled_items(self):
-        transactions = db.session.execute(db.select(Transactions).order_by(Transactions.item_id)).scalars()
-        # quantity_sold = {}
+    def number_of_selled_items(self, start_date=None, end_date=None):
+        if start_date != None and end_date != None:
+            transactions = Transactions.query.filter(db.and_(Transactions.timestamp >= start_date, Transactions.timestamp <= end_date)).order_by(Transactions.item_id).all()
+        else:
+            transactions = db.session.execute(db.select(Transactions).order_by(Transactions.item_id)).scalars()
         quantity_sold = []
         count = 0
         current_transaction = None
@@ -205,7 +208,7 @@ class Transactions(db.Model):
     item_id = db.Column(db.Integer, db.ForeignKey("stock.id"))
     itemname = db.relationship("Stock", back_populates="transactions")
     actions = db.Column(db.JSON)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
     """
     {
         'purchase': {'quantity':added_quantity, 'price':item.buying_price}, 
@@ -286,17 +289,27 @@ def edit(stock_id):
         return redirect(url_for('stock'))
     return render_template('edit.html', form=edit_form)
 
-@app.route("/intransactions")
+@app.route("/intransactions", methods=['POST', 'GET'])
 def intransactions():
     all_transactions = db.session.execute(db.select(Transactions)).scalars().all()
-    # buy_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.added_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.added_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.added_quantity > 0]
+    if request.method == "POST":
+        start_date = datetime.strptime(request.form.get("startDate", ""), "%Y-%m-%d")
+        end_date = datetime.strptime(request.form.get("endDate", ""), "%Y-%m-%d")
+        result = Transactions.query.filter(db.and_(Transactions.timestamp >= start_date, Transactions.timestamp <= end_date)).all()
+        buy_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, json.loads(transaction.actions)['purchase']['quantity'], json.loads(transaction.actions)['purchase']['price']*json.loads(transaction.actions)['purchase']['quantity'], (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in result if json.loads(transaction.actions)['purchase']['quantity'] > 0]
+        return render_template("purchasetransactions.html", transactions=buy_transactions)
     buy_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, json.loads(transaction.actions)['purchase']['quantity'], json.loads(transaction.actions)['purchase']['price']*json.loads(transaction.actions)['purchase']['quantity'], (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if json.loads(transaction.actions)['purchase']['quantity'] > 0]
     return render_template("purchasetransactions.html", transactions=buy_transactions)
 
 @app.route("/outtransactions")
 def outtransactions():
     all_transactions = db.session.execute(db.select(Transactions)).scalars().all()
-    # sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, transaction.sold_quantity, db.get_or_404(Stock, transaction.item_id).buying_price*transaction.sold_quantity, (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if transaction.sold_quantity > 0]
+    if request.method == "POST":
+        start_date = datetime.strptime(request.form.get("startDate", ""), "%Y-%m-%d")
+        end_date = datetime.strptime(request.form.get("endDate", ""), "%Y-%m-%d")
+        result = Transactions.query.filter(db.and_(Transactions.timestamp >= start_date, Transactions.timestamp <= end_date)).all()
+        sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, json.loads(transaction.actions)['sold']['quantity'], json.loads(transaction.actions)['sold']['price_sold']*json.loads(transaction.actions)['sold']['quantity'], (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in result if json.loads(transaction.actions)['sold']['quantity'] > 0]
+        return render_template("soldtransactions.html", transactions=sold_transactions)
     sold_transactions = [[db.get_or_404(Stock, transaction.item_id).item_name, json.loads(transaction.actions)['sold']['quantity'], json.loads(transaction.actions)['sold']['price_sold']*json.loads(transaction.actions)['sold']['quantity'], (transaction.timestamp).strftime("%Y-%m-%d %H:%M:%S")]for transaction in all_transactions if json.loads(transaction.actions)['sold']['quantity'] > 0]
     return render_template("soldtransactions.html", transactions=sold_transactions)
 
@@ -320,8 +333,12 @@ def sold():
         return redirect(url_for('stock'))
     return render_template("sold.html", stocks=all_items)
 
-@app.route("/profit")
+@app.route("/profit", methods=['POST', 'GET'])
 def profit():
+    if request.method == 'POST':
+        start_date = datetime.strptime(request.form.get("startDate", ""), "%Y-%m-%d")
+        end_date = datetime.strptime(request.form.get("endDate", ""), "%Y-%m-%d")
+        data_sold = stock_manager.number_of_selled_items(start_date=start_date, end_date=end_date)
     data_sold = stock_manager.number_of_selled_items()
     return render_template("profit.html", all_data=data_sold)
 
