@@ -173,12 +173,12 @@ class StockManager:
         deni = Kiraka.query.filter_by(customer_name=customer_name).first()
         for item in deni.items_owned['items']:
             if item['item_name'] == item_name:
-                deni.items_owned['items'].delete(item)
+                deni.items_owned['items'].remove(item)
                 break
-    
-
-        
-
+        flag_modified(deni, 'items_owned')
+        if len(deni.items_owned['items']) == 0:
+            db.session.delete(deni)
+        db.session.commit()
 
 
 app = Flask(__name__)
@@ -349,24 +349,42 @@ def new_deni():
 def existing_deni(customer_id):
     customer_details = Kiraka.query.get_or_404(customer_id)
     all_items_owned = customer_details.items_owned['items']
+    existing_items = [stock for stock in all_items_owned]
+    available_stocks = Stock.query.all()
     if request.method == "POST":
         customer_name = customer_details.customer_name
         item_burrowed = request.form.get('stockName', '')
         quantity_burrowed = int(request.form.get('burrowedQuantity', ''))
         stock_manager.add_to_existing_kiraka(customer_name=customer_name, item_name=item_burrowed, quantity_borrowed=quantity_burrowed)
         return redirect(url_for('kiraka'))
-    return render_template('add_kiraka.html', stocks=all_items_owned, customer=customer_details)
+    return render_template('add_kiraka.html', existing_items=existing_items, available_stocks=available_stocks, customer=customer_details)
 
 @app.route("/pay_deni/<int:customer_id>", methods=['POST', 'GET'])
 def pay_deni(customer_id):
-    all_items = Stock.query.all()
+    customer_details = Kiraka.query.get_or_404(customer_id)
+    items_owned = customer_details.items_owned['items']
     if request.method == "POST":
-        customer_name = request.args.get('customer_name')
-        item_burrowed = request.form.get('stockName', '')
-        quantity_burrowed = request.form.get('burrowedQuantity', '')
-        stock_manager.add_to_existing_kiraka(customer_name=customer_name, item_name=item_burrowed, quantity_borrowed=quantity_burrowed)
+        selected_items = request.form.getlist('selected_items')
+        # Process the selected items for payment (you can call your pay_item_owned method here)
+        for item_name in selected_items:
+            stock_manager.pay_item_owned(customer_name=customer_details.customer_name, item_name=item_name)
         return redirect(url_for('kiraka'))
-    return render_template('add_kiraka.html', stocks=all_items)
+    return render_template('pay_deni.html', items_owned=items_owned, customer=customer_details)
+
+# def pay_items(customer_id):
+#     customer_details = Kiraka.query.get_or_404(customer_id)
+#     items_owned = customer_details.items_owned['items']
+
+#     if request.method == "POST":
+#         selected_items = request.form.getlist('selected_items')
+        
+#         # Process the selected items for payment (you can call your pay_item_owned method here)
+#         for item_name in selected_items:
+#             stock_manager.pay_item_owned(customer_name=customer_details.customer_name, item_name=item_name)
+        
+#         return redirect(url_for('kiraka'))
+
+#     return render_template('pay_items.html', items_owned=items_owned, customer=customer_details)
 
 
 # with app.app_context():

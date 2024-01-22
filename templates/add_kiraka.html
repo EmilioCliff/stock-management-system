@@ -8,10 +8,20 @@
             <input type="text" class="form-control" id="stockName" name="stockName" oninput="showStockOptions(this.value)" autocomplete="off">
           </div>
           <ul id="stockOptions" class="list-group mt-2" style="display: none;">
-            {% for stock in stocks %}
+            {% for stock in existing_items %}
+            <li class="list-group-item" onclick="selectStock('{{ stock.item_name }}')">
+              {{ stock.item_name }}: {{ stock.quantity_borrowed }}: {{ (stock.quantity_borrowed|int) * stock.price_bought }}
+            </li>
+          {% endfor %}
+            <!-- {% for stock in stocks %} -->
               <!-- <li class="list-group-item" onclick="selectStock('{{ stock.item_name }}')">{{ stock.item_name }}</li> -->
-              <li class="list-group-item" onclick="selectStock('{{ stock.item_name }}')">{{ stock.item_name }}: {{ stock.quantity_borrowed }}: {{ (stock.quantity_borrowed|int) * stock.price_bought }} </li>
-            {% endfor %}
+              <!-- <li class="list-group-item" onclick="selectStock('{{ stock.item_name }}')">{{ stock.item_name }}: {{ stock.quantity_borrowed }}: {{ (stock.quantity_borrowed|int) * stock.price_bought }} </li> -->
+            <!-- {% endfor %} -->
+            {% for stock in available_stocks %}
+            <li class="list-group-item" onclick="selectStock('{{ stock.item_name }}')">
+              {{ stock.item_name }}
+            </li>
+          {% endfor %}
           </ul>
         <!-- <select class="form-control" id="stockName" name="stockName">
             <option value="" selected disabled>Select Item</option>
