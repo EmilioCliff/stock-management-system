@@ -89,7 +89,6 @@
   <script>
     function prepareDeleteConfirmation(button) {
       var stockId = button.getAttribute('data-stock-id');
-      console.log("Stock ID:", stockId);
       var confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
       confirmDeleteBtn.setAttribute('data-stock-id', stockId);
       confirmDeleteBtn.href = confirmDeleteBtn.href.replace('stock_id=', 'stock_id=' + stockId);

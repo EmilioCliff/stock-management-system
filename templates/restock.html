@@ -1,11 +1,11 @@
 {% extends 'index.html' %}
 {% block content %}
 <div class="form-centered p-3 shadow">
-  <form role="search" method="post" action="{{ url_for('restock') }}">
+  <form role="search" method="post" action="{{ url_for('restock') }}" autocomplete="off">
     <div class="mb-3">
       <label for="stockName" class="form-label">Item Restocked</label>
       <div class="input-group">
-        <input type="text" class="form-control" id="stockName" name="stockName" oninput="showStockOptions(this.value)" autocomplete="nope">
+        <input type="text" class="form-control" id="stockName" name="stockName" oninput="showStockOptions(this.value)" autocomplete="off">
       </div>
       <ul id="stockOptions" class="list-group mt-2" style="display: none;">
         {% for stock in stocks %}
@@ -17,7 +17,7 @@
       <label for="restockQuantity" class="form-label">Restocked Quantity</label>
       <input type="number" class="form-control" id="restockQuantity" name="restockQuantity" autocomplete="off">
     </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Restock Item</button>
   </form>
 </div>
   

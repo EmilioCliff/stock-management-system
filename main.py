@@ -4,14 +4,15 @@ from datetime import datetime
 from flask_bootstrap import Bootstrap5
 from forms import AddForm, EditForm, Restocked, Sold
 import json
+from sqlalchemy.orm.attributes import flag_modified
 
 # Define stockmanager that will have methods for daily operations
 class StockManager:
     def transact(self, item_id, sold_quantity, added_quantity):
         item = Stock.query.get_or_404(item_id)
         action = {
-            'purchase': {'quantity':added_quantity, 'price':item.buying_price}, 
-            'sold': {'quantity':sold_quantity, 'price_sold':item.selling_price, 'b_price': item.buying_price}
+            'purchase': {'quantity':int(added_quantity), 'price':item.buying_price}, 
+            'sold': {'quantity':int(sold_quantity), 'price_sold':item.selling_price, 'b_price': item.buying_price}
             }
         action_json = json.dumps(action)
         # transaction = Transactions(item_id=item_id, sold_quantity=sold_quantity, added_quantity=added_quantity)
@@ -103,21 +104,22 @@ class StockManager:
         count = 0
         current_transaction = None
         for transaction in transactions:
+            actions_dumps = json.loads(transaction.actions)
             if current_transaction == None:
                 current_transaction = transaction.item_id
             if current_transaction == transaction.item_id:
                 # count += transaction.sold_quantity
-                count += transaction.actions['sold']['quantity']
+                count += actions_dumps['sold']['quantity']
             else:
                 item = Stock.query.get_or_404(current_transaction)
-                quantity_sold.append([item.item_name, count, transaction.actions['sold']['b_price'], transaction.actions['sold']['price_sold']])
+                quantity_sold.append([item.item_name, count, actions_dumps['sold']['b_price'], actions_dumps['sold']['price_sold']])
                 # quantity_sold[item.item_name] = count
                 current_transaction = transaction.item_id
                 # count = transaction.sold_quantity
-                count = transaction.actions['sold']['quantity']
+                count = actions_dumps['sold']['quantity']
         if current_transaction is not None:
             item = Stock.query.get_or_404(current_transaction)
-            quantity_sold.append([item.item_name, count, transaction.actions['sold']['b_price'], transaction.actions['sold']['price_sold']])
+            quantity_sold.append([item.item_name, count, actions_dumps['sold']['b_price'], actions_dumps['sold']['price_sold']])
         data_plus_profit = []
         print(quantity_sold)
         for data in quantity_sold:
@@ -150,11 +152,14 @@ class StockManager:
             if item['item_name'] == item_name:
                 item['quantity_borrowed'] += quantity_borrowed
                 present = 1
+                print(item['quantity_borrowed'], quantity_borrowed)
+                flag_modified(deni, 'items_owned')
                 break
         if present == 0:
             item = Stock.query.filter_by(item_name=item_name).first()
             new_item = {'item_name': item_name, 'quantity_borrowed': quantity_borrowed, 'price_bought':item.selling_price}
             deni.items_owned['items'].append(new_item)
+            flag_modified(deni, 'items_owned')
         db.session.commit()
 
     def calculate_total_owned(self, customer_name):
@@ -262,7 +267,6 @@ def delete():
     print(stockId)
     stock_to_delete = Stock.query.filter_by(id=stockId).first().item_name
     stock_manager.remove_item(stock_to_delete)
-    print('Deleting')
     return redirect(url_for('stock'))
 
 
@@ -366,6 +370,7 @@ def pay_deni(customer_id):
 
 
 # with app.app_context():
+#     stock_manager.add_to_existing_kiraka('Ruben Hodge', 'Jameson', 2)
     # stock_manager = StockManager()
     # stock_manager.sell_item("Best Gin", 6)
     # stock_manager.add_item_quantity("Chrome", 10)
