@@ -1,11 +1,10 @@
-from flask import Flask, current_app, render_template, url_for, redirect, request
+from flask import Flask, current_app, render_template, url_for, redirect, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 from flask_bootstrap import Bootstrap5
 from forms import AddForm, EditForm, Restocked, Sold
 import json
 from sqlalchemy.orm.attributes import flag_modified
-import pytz
 
 # Define stockmanager that will have methods for daily operations
 class StockManager:
@@ -16,7 +15,6 @@ class StockManager:
             'sold': {'quantity':int(sold_quantity), 'price_sold':item.selling_price, 'b_price': item.buying_price}
             }
         action_json = json.dumps(action)
-        # transaction = Transactions(item_id=item_id, sold_quantity=sold_quantity, added_quantity=added_quantity)
         transaction = Transactions(item_id=item_id, actions=action_json)
         db.session.add(transaction)
         db.session.commit()
@@ -25,13 +23,13 @@ class StockManager:
         with current_app.app_context():
             existing_item = Stock.query.filter_by(item_name=name).first()
             if existing_item:
-                print("Item already exist")
+                return False
             else:
-                item = Stock(item_name=name, buying_price=b_price, selling_price=s_price, item_quantity=quantity)
+                item = Stock(item_name=name.lower(), buying_price=b_price, selling_price=s_price, item_quantity=quantity)
                 db.session.add(item)
                 db.session.commit()
                 self.transact(Stock.query.filter_by(item_name=name).first().id, 0, quantity)
-                print(f"{item.item_name} added to db")
+                return True
     
     def remove_item(self, name):
         with current_app.app_context():
@@ -39,9 +37,9 @@ class StockManager:
             if item:
                 db.session.delete(item)
                 db.session.commit()
-                print(f"Removed {item.item_name}")
+                return True
             else:
-                print(f"Item {name} not found")
+                return False
 
     def add_item_quantity(self, name, quantity):
         with current_app.app_context():
@@ -51,9 +49,9 @@ class StockManager:
                 self.transact(item.id, 0, quantity)
                 item.item_quantity += quantity
                 db.session.commit()
-                print(f"added item quantity by {quantity}")
+                return True
             else:
-                print("Couldn't add item quantity")
+                return False
 
 
     def update_item_s_price(self, name, new_price):
@@ -62,9 +60,11 @@ class StockManager:
             if item:
                 item.selling_price = new_price
                 db.session.commit()
-                print(f"Changed item price to {new_price}")
+                # print(f"Changed item price to {new_price}")
+                return True
             else:
-                print("Couldn't change item price")
+                # print("Item not found")
+                return False
 
     def update_item_b_price(self, name, new_price):
         with current_app.app_context():
@@ -72,9 +72,11 @@ class StockManager:
             if item:
                 item.buying_price = new_price
                 db.session.commit()
-                print(f"Changed item price to {new_price}")
+                # print(f"Changed item price to {new_price}")
+                return True
             else:
-                print("Couldn't change item price")
+                # print("Item not found")
+                return False
 
     def sell_item(self, name, quantity_sold):
         with current_app.app_context():
@@ -84,22 +86,22 @@ class StockManager:
                 if item.item_quantity >= quantity_sold:
                     item.item_quantity -= quantity_sold
                     self.transact(item.id, quantity_sold, 0)
-                    # transaction = Transactions(item_id=item.id, sold_quantity=quantity_sold, added_quantity=0)
-                    # db.session.add(transaction)
-                    # db.session.commit()
+                    return True
                 else:
-                    print(f"Not enough quantity to subtract {quantity_sold} from {item.item_quantity}")
+                    # print(f"Not enough quantity to subtract {quantity_sold} from {item.item_quantity}")
+                    return False
             else:
-                print("Couldn't find item")
+                # print("Couldn't find item")
+                return 1
         
-    def display_stock(self):
-        with current_app.app_context():
-            items = Stock.query.all()
-            for item in items:
-                print(f"ID: {item.id}, ITEM: {item.item_name}, Quantity: {item.item_quantity}, Buying Price: {item.buying_price}, Selling Price: {item.selling_price}")
+    # def display_stock(self):
+    #     with current_app.app_context():
+    #         items = Stock.query.all()
+    #         for item in items:
+    #             print(f"ID: {item.id}, ITEM: {item.item_name}, Quantity: {item.item_quantity}, Buying Price: {item.buying_price}, Selling Price: {item.selling_price}")
 
     def number_of_selled_items(self, start_date=None, end_date=None):
-        if start_date != None and end_date != None:
+        if start_date is not None and end_date is not None:
             transactions = Transactions.query.filter(db.and_(Transactions.timestamp >= start_date, Transactions.timestamp <= end_date)).order_by(Transactions.item_id).all()
         else:
             transactions = db.session.execute(db.select(Transactions).order_by(Transactions.item_id)).scalars()
@@ -108,45 +110,42 @@ class StockManager:
         current_transaction = None
         for transaction in transactions:
             actions_dumps = json.loads(transaction.actions)
-            if current_transaction == None:
+            if current_transaction is None:
                 current_transaction = transaction.item_id
             if current_transaction == transaction.item_id:
-                # count += transaction.sold_quantity
                 count += actions_dumps['sold']['quantity']
             else:
                 item = Stock.query.get_or_404(current_transaction)
                 quantity_sold.append([item.item_name, count, actions_dumps['sold']['b_price'], actions_dumps['sold']['price_sold']])
-                # quantity_sold[item.item_name] = count
                 current_transaction = transaction.item_id
-                # count = transaction.sold_quantity
                 count = actions_dumps['sold']['quantity']
         if current_transaction is not None:
             item = Stock.query.get_or_404(current_transaction)
             quantity_sold.append([item.item_name, count, actions_dumps['sold']['b_price'], actions_dumps['sold']['price_sold']])
         data_plus_profit = []
-        print(quantity_sold)
+        # print(quantity_sold)
         for data in quantity_sold:
-            # item_to_calculate = Stock.query.filter_by(item_name=data[0]).first()
-            # profit = (item_to_calculate.selling_price - item_to_calculate.buying_price)*data[1]
             profit = (data[3] - data[2])*data[1]
             data_plus_profit.append(data + [profit])
         sorted_data_list = sorted(data_plus_profit, key=lambda x: x[1], reverse=True)
+        # print(sorted_data_list)
         return sorted_data_list
     
     def add_kiraka(self, customer_name, item_name, quantity_borrowed):
+        existing_customer = Kiraka.query.filter_by(customer_name=customer_name).first()
+        print(existing_customer)
+        if existing_customer is not None:
+            print("Customer already exist")
+            return False
         item = Stock.query.filter_by(item_name=item_name).first()
-        print(item)
-        # items_owned = {
-        #     'item_name': item_name,
-        #     'quantity_borrowed': quantity_borrowed,
-        #     'price_bought': item.selling_price
-        # }
+        # print(item)
         items_owned = {
             'items': [{'item_name': item_name, 'quantity_borrowed': quantity_borrowed, 'price_bought': item.selling_price}]
         }
-        deni = Kiraka(customer_name=customer_name, items_owned=items_owned)
+        deni = Kiraka(customer_name=customer_name.lower(), items_owned=items_owned)
         db.session.add(deni)
         db.session.commit()
+        return True
 
     def add_to_existing_kiraka(self, customer_name, item_name, quantity_borrowed):
         deni = Kiraka.query.filter_by(customer_name=customer_name).first()
@@ -215,8 +214,6 @@ class Transactions(db.Model):
         'sold': {'quantity':sold_quantity, 'price_sold':item.selling_price, 'b_price': item.buying_price}
     }
     """
-    # sold_quantity = db.Column(db.Integer, nullable=False)
-    # added_quantity = db.Column(db.Integer, nullable=False)
 
 class Kiraka(db.Model):
     __tablename__ = "Kiraka"
@@ -241,17 +238,17 @@ def dashboard():
 
 @app.route("/add", methods=['POST', 'GET'])
 def add():
-    # add_form = AddForm()
     if request.method == 'POST':
-        name = request.form.get("itemName", "")
+        name = request.form.get("itemName", "").lower()
         b_price = request.form.get("buyingPrice", "")
         s_price = request.form.get("sellingPrice", "")
         quantity = request.form.get("itemQuantity", "")
-        # name = add_form.item_name.data
-        # b_price = add_form.buying_price.data
-        # s_price = add_form.selling_price.data
-        # quantity = add_form.item_quantity.data
-        stock_manager.add_item(name, b_price, s_price, quantity)
+        success = stock_manager.add_item(name, b_price, s_price, quantity)
+        if not success:
+            flash('Item already exists')
+            return redirect(url_for("add"))
+        else:
+            flash('Item added successfully')
         return redirect(url_for('stock'))
     return render_template("add.html") 
 
@@ -259,7 +256,7 @@ def add():
 def stock():
     all_stocks = db.session.query(Stock).order_by(Stock.item_name).all()
     if request.method == "POST":
-        search_query = request.form.get('search', '')
+        search_query = request.form.get('search', '').lower()
         results = Stock.query.filter(Stock.item_name.ilike(f'%{search_query}%')).all()
         return render_template("stock.html", all_stocks=results)
     return render_template("stock.html", all_stocks=all_stocks)
@@ -269,7 +266,11 @@ def delete():
     stockId = request.args.get('stock_id')
     print(stockId)
     stock_to_delete = Stock.query.filter_by(id=stockId).first().item_name
-    stock_manager.remove_item(stock_to_delete)
+    success = stock_manager.remove_item(stock_to_delete)
+    if not success:
+        flash("Couldn't delete item. Try Again")
+    else:
+        flash("Item deleted successfully")
     return redirect(url_for('stock'))
 
 
@@ -277,7 +278,7 @@ def delete():
 def edit(stock_id):
     stock_to_edit = db.get_or_404(Stock, stock_id)
     edit_form = EditForm(
-        item_name=stock_to_edit.item_name,
+        item_name=stock_to_edit.item_name.title(),
         buying_price=stock_to_edit.buying_price,
         selling_price=stock_to_edit.selling_price
     )
@@ -286,6 +287,7 @@ def edit(stock_id):
         new_s_price = float(edit_form.selling_price.data)
         stock_manager.update_item_b_price(stock_to_edit.item_name, new_b_price)
         stock_manager.update_item_s_price(stock_to_edit.item_name, new_s_price)
+        flash('Item edited successfully')
         return redirect(url_for('stock'))
     return render_template('edit.html', form=edit_form)
 
@@ -317,9 +319,14 @@ def outtransactions():
 def restock():
     all_items = Stock.query.all()
     if request.method == "POST":
-        item_restocked_name = request.form.get('stockName', '')
+        item_restocked_name = request.form.get('stockName', '').lower()
         added_quantity = request.form.get('restockQuantity', '')
-        stock_manager.add_item_quantity(item_restocked_name, int(added_quantity))
+        success = stock_manager.add_item_quantity(item_restocked_name, int(added_quantity))
+        if not success:
+            flash("Item not found")
+            return redirect(url_for('restock'))
+        else:
+            flash("Item restocked successfully")
         return redirect(url_for('stock'))
     return render_template("restock.html", stocks=all_items)
 
@@ -327,9 +334,17 @@ def restock():
 def sold():
     all_items = Stock.query.all()
     if request.method == "POST":
-        item_sold_name = request.form.get('stockName', '')
+        item_sold_name = request.form.get('stockName', '').lower()
         sold_quantity = request.form.get('restockQuantity', '')
-        stock_manager.sell_item(item_sold_name, int(sold_quantity))
+        success = stock_manager.sell_item(item_sold_name, int(sold_quantity))
+        if success:
+            flash("Item sold successfully")
+        elif success == 1:
+            flash("Item not found")
+            return redirect(url_for('sold'))
+        else:
+            flash("Not enough stock to sell this amount")
+            return redirect(url_for('sold'))
         return redirect(url_for('stock'))
     return render_template("sold.html", stocks=all_items)
 
@@ -344,9 +359,10 @@ def profit():
 
 @app.route("/kiraka", methods=['POST', 'GET'])
 def kiraka():
-    kiraka_data = Kiraka.query.all()
+    db.session.query(Stock).order_by(Stock.item_name).all()
+    kiraka_data = db.session.query(Kiraka).order_by(Kiraka.customer_name).all()
     if request.method == "POST":
-       search_query = request.form.get('search', '')
+       search_query = request.form.get('search', '').lower()
        results = Kiraka.query.filter(Kiraka.customer_name.ilike(f'%{search_query}%')).all()
        return render_template("kiraka.html", all_data=results)
     return render_template("kiraka.html", all_data=kiraka_data)
@@ -355,10 +371,17 @@ def kiraka():
 def new_deni():
     all_items = Stock.query.all()
     if request.method == "POST":
-        customer_name = request.form.get('customerName', '')
-        item_burrowed = request.form.get('stockName', '')
+        customer_name = request.form.get('customerName', '').lower()
+        print(customer_name)
+        item_burrowed = request.form.get('stockName', '').lower()
         quantity_burrowed = int(request.form.get('burrowedQuantity', ''))
-        stock_manager.add_kiraka(customer_name=customer_name, item_name=item_burrowed, quantity_borrowed=quantity_burrowed)
+        success = stock_manager.add_kiraka(customer_name=customer_name, item_name=item_burrowed, quantity_borrowed=quantity_burrowed)
+        if not success:
+            print('im being printed')
+            flash("Customer already exists")
+            return redirect(url_for('new_deni'))
+        else:
+            flash("Customer added successfully")
         return redirect(url_for('kiraka'))
     return render_template('add_customer.html', stocks=all_items)
 
@@ -370,7 +393,7 @@ def existing_deni(customer_id):
     available_stocks = Stock.query.all()
     if request.method == "POST":
         customer_name = customer_details.customer_name
-        item_burrowed = request.form.get('stockName', '')
+        item_burrowed = request.form.get('stockName', '').lower()
         quantity_burrowed = int(request.form.get('burrowedQuantity', ''))
         stock_manager.add_to_existing_kiraka(customer_name=customer_name, item_name=item_burrowed, quantity_borrowed=quantity_burrowed)
         return redirect(url_for('kiraka'))
@@ -382,30 +405,14 @@ def pay_deni(customer_id):
     items_owned = customer_details.items_owned['items']
     if request.method == "POST":
         selected_items = request.form.getlist('selected_items')
-        # Process the selected items for payment (you can call your pay_item_owned method here)
         for item_name in selected_items:
-            stock_manager.pay_item_owned(customer_name=customer_details.customer_name, item_name=item_name)
+            stock_manager.pay_item_owned(customer_name=customer_details.customer_name, item_name=item_name.lower())
+        flash("Item Paid For")
         return redirect(url_for('kiraka'))
     return render_template('pay_deni.html', items_owned=items_owned, customer=customer_details)
 
-# def pay_items(customer_id):
-#     customer_details = Kiraka.query.get_or_404(customer_id)
-#     items_owned = customer_details.items_owned['items']
-
-#     if request.method == "POST":
-#         selected_items = request.form.getlist('selected_items')
-        
-#         # Process the selected items for payment (you can call your pay_item_owned method here)
-#         for item_name in selected_items:
-#             stock_manager.pay_item_owned(customer_name=customer_details.customer_name, item_name=item_name)
-        
-#         return redirect(url_for('kiraka'))
-
-#     return render_template('pay_items.html', items_owned=items_owned, customer=customer_details)
-
-
 # with app.app_context():
-#     stock_manager.add_to_existing_kiraka('Ruben Hodge', 'Jameson', 2)
+    # stock_manager.add_to_existing_kiraka('Ruben Hodge', 'Jameson', 2)
     # stock_manager = StockManager()
     # stock_manager.sell_item("Best Gin", 6)
     # stock_manager.add_item_quantity("Chrome", 10)

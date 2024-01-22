@@ -12,7 +12,7 @@
         <div class="form-check">
           <input type="checkbox" class="form-check-input" id="item{{ loop.index }}" name="selected_items" value="{{ item.item_name }}">
           <label class="form-check-label" for="item{{ loop.index }}">
-            {{ item.item_name }} - {{ item.quantity_borrowed }} - {{ (item.quantity_borrowed|int) * item.price_bought }}/=
+            {{ item.item_name|title }} - {{ item.quantity_borrowed }} - {{ (item.quantity_borrowed|int) * item.price_bought }}/=
           </label>
         </div>
       {% endfor %}

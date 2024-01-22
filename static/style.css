@@ -30,6 +30,12 @@
     visibility: hidden;
     transition: tranform 0.4s, top 0.4s;
 }
+.flash-messages {
+    position: absolute;
+    width: 500px;
+    top: 18%;
+    left: 40%;
+}
 .open-popup{
     visibility: visible;
     top: 50%;

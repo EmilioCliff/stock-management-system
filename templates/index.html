@@ -130,7 +130,7 @@
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             dateElement.textContent = now.toLocaleDateString('en-US', options);
             
-            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
             timeElement.textContent = now.toLocaleTimeString('en-US', timeOptions);
         }
         updateTime();
@@ -154,7 +154,7 @@
           autoclose: true,
           todayHighlight: true,
           startDate: '2023-12-31',
-          endDate: '2024-02-02',
+          endDate: new Date(),
           clearBtn: true
       });
         // Update the startDate option of the second datepicker when the first date is changed

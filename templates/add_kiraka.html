@@ -10,7 +10,7 @@
           <ul id="stockOptions" class="list-group mt-2" style="display: none;">
             {% for stock in existing_items %}
             <li class="list-group-item" onclick="selectStock('{{ stock.item_name }}')">
-              {{ stock.item_name }}: {{ stock.quantity_borrowed }}: {{ (stock.quantity_borrowed|int) * stock.price_bought }}
+              {{ stock.item_name|title }}: {{ stock.quantity_borrowed }}: {{ (stock.quantity_borrowed|int) * stock.price_bought }}\=
             </li>
           {% endfor %}
             <!-- {% for stock in stocks %} -->
@@ -19,7 +19,7 @@
             <!-- {% endfor %} -->
             {% for stock in available_stocks %}
             <li class="list-group-item" onclick="selectStock('{{ stock.item_name }}')">
-              {{ stock.item_name }}
+              {{ stock.item_name|title }}
             </li>
           {% endfor %}
           </ul>

@@ -1,5 +1,22 @@
 {% extends 'index.html' %}
 {% block content %}
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}
+<div class="alert alert-success alert-dismissible fade show flash-messages" role="alert">
+  <div class="d-flex align-items-center"> <!-- Make the icon and text flex items -->
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+        </svg>
+      </div>
+      <div class="ms-2"> <!-- Add margin to separate the icon from the text -->
+          {{ message }}
+      </div>
+  </div>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endwith %}
 <div class="container-fluid">
     <div class="d-flex flex-row justify-content-end">
         <a href="{{ url_for('new_deni') }}" class="btn rounded btn-outline-success d-flex justify-content-center mt-3" style="height: 40px; width: 100px;">
@@ -33,14 +50,14 @@
               {%for data in all_data %}
               <tr>
                 <th scope="row">{{ loop.index }}</th>
-                <td class="text-center p-3">{{ data.customer_name }}</td>
+                <td class="text-center p-3">{{ data.customer_name|title }}</td>
                 <td class="text-center p-2">
                     <div class="d-flex justify-content-center">
                       <!-- <a href="#" class="text-decoration-none btn btn-success mx-4">View</a> -->
                       <a type="button" class="btn btn-success mx-4" onclick="openPopup(this)" data-custom="{{loop.index}}">View</a>
                       <div class="popup-container" id="popupContainer{{ loop.index }}">
                         <div class="popup text-center p-2" id="popup{{ loop.index}}">
-                            <h2 id="popupHeading{{ loop.index }}" class="mt-2">{{ data.customer_name }}</h2>
+                            <h2 id="popupHeading{{ loop.index }}" class="mt-2">{{ data.customer_name|title }}</h2>
                             <hr class="mt-1">
                             <table class="table table-bordered">
                               <thead class="text-center">
@@ -53,7 +70,7 @@
                               <tbody class="table-group-divider">
                                 {% for item in data.items_owned['items'] %}
                                 <tr>
-                                  <td class="p-2">{{ item.item_name }}</td>
+                                  <td class="p-2">{{ item.item_name|title }}</td>
                                   <td class="text-center p-2">{{ item.quantity_borrowed }}</td>
                                   <td class="text-center p-2">{{  item.quantity_borrowed * item.price_bought }}</td>
                                 </tr>
